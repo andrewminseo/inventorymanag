@@ -749,26 +749,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
-        // This helps ensure Bootstrap is loaded before using it
-        window.onload = function() {
-            if (typeof initializeNotepad === 'function') {
-                initializeNotepad();
-            } else {
-                console.error("Notepad initialization function not found");
-            }
-        };
-    </script>
-    <script>
         // Core app functionality
-        // Wait until the document is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // Wait a moment to ensure all scripts are loaded
-            setTimeout(function() {
-                initializeNotepad();
-            }, 100);
-        });
-        
-        function initializeNotepad() {
             // DOM Elements
             const editor = document.getElementById('editor');
             const fileInput = document.getElementById('file-input');
@@ -788,7 +770,7 @@
             const searchNext = document.getElementById('search-next');
             const searchPrev = document.getElementById('search-prev');
             const toast = document.getElementById('toast');
-            let toastInstance = null;
+            const toastInstance = new bootstrap.Toast(toast);
             const fontFamily = document.getElementById('font-family');
             const fontSize = document.getElementById('font-size');
             const fontBold = document.getElementById('font-bold');
@@ -837,9 +819,6 @@
             initApp();
             
             function initApp() {
-                // Initialize Bootstrap components
-                initializeBootstrap();
-                
                 // Load saved preferences
                 loadPreferences();
                 
@@ -863,25 +842,6 @@
                 
                 // Focus the editor
                 editor.focus();
-            }
-            
-            function initializeBootstrap() {
-                // Initialize Bootstrap tooltips
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                if (typeof bootstrap !== 'undefined') {
-                    tooltipTriggerList.map(function (tooltipTriggerEl) {
-                        return new bootstrap.Tooltip(tooltipTriggerEl);
-                    });
-                    
-                    // Initialize modals
-                    const fontModalEl = document.getElementById('fontModal');
-                    const shortcutsModalEl = document.getElementById('shortcutsModal');
-                    const aboutModalEl = document.getElementById('aboutModal');
-                    
-                    if (fontModalEl) window.fontModal = new bootstrap.Modal(fontModalEl);
-                    if (shortcutsModalEl) window.shortcutsModal = new bootstrap.Modal(shortcutsModalEl);
-                    if (aboutModalEl) window.aboutModal = new bootstrap.Modal(aboutModalEl);
-                }
             }
             
             function loadPreferences() {
@@ -1902,17 +1862,8 @@
                         toastIcon.style.color = '#17a2b8';
                 }
                 
-                // Create a fallback toast implementation if bootstrap isn't available
-                if (typeof bootstrap !== 'undefined') {
-                    const toast = new bootstrap.Toast(toastElement);
-                    toast.show();
-                } else {
-                    // Simple fallback - show and hide after 3 seconds
-                    toastElement.style.display = 'block';
-                    setTimeout(() => {
-                        toastElement.style.display = 'none';
-                    }, 3000);
-                }
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
             }
         });
 

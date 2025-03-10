@@ -1206,4 +1206,693 @@
             }
             
             function saveFileAs(callback) {
-                fileNameInput
+                fileNameInput.value = appState.currentFilename;
+                fileNameDialog.style.display = 'block';
+                fileNameInput.focus();
+                fileNameInput.select();
+                
+                // Store callback for use after file name is entered
+                appState.saveCallback = callback;
+            }
+            
+            function saveFileWithName() {
+                const filename = fileNameInput.value.trim();
+                if (!filename) {
+                    alert('Please enter a file name');
+                    return;
+                }
+                
+                // Use FileSaver.js or similar library to save the file
+                const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
+                saveAs(blob, filename);
+                
+                appState.currentFilename = filename;
+                appState.isModified = false;
+                updateUI();
+                
+                fileNameDialog.style.display = 'none';
+                
+                showToast('File Saved', `File "${filename}" has been saved`, 'success');
+                
+                // Call callback if exists
+                if (typeof appState.saveCallback === 'function') {
+                    appState.saveCallback();
+                    appState.saveCallback = null;
+                }
+            }
+            
+            function cancelFileDialog() {
+                fileNameDialog.style.display = 'none';
+                appState.saveCallback = null;
+            }
+            
+            function saveFileContent(file) {
+                // In a web app we can't directly save to an existing file without permissions
+                // So we'll download a new copy of the file
+                const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
+                saveAs(blob, file.name);
+                
+                appState.isModified = false;
+                updateUI();
+                
+                showToast('File Saved', `File "${file.name}" has been saved`, 'success');
+            }
+            
+            function printFile() {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>${appState.currentFilename}</title>
+                        <style>
+                            body {
+                                font-family: ${appState.fontFamily};
+                                font-size: ${appState.fontSize}px;
+                                line-height: ${appState.lineHeight};
+                                white-space: pre-wrap;
+                                margin: 20px;
+                            }
+                            @media print {
+                                body { margin: 1cm; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${editor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                
+                // Wait for content to load before printing
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
+            
+            function exitApp() {
+                if (appState.isModified) {
+                    if (confirm('You have unsaved changes. Do you want to save them before exiting?')) {
+                        saveFile(() => {
+                            window.close();
+                        });
+                        return;
+                    }
+                }
+                window.close();
+            }
+            
+            // Edit operations
+            function addToHistory() {
+                // Only add to history if content changed
+                const currentContent = editor.value;
+                
+                // Don't add if same as current history entry
+                if (appState.historyIndex >= 0 && 
+                    appState.history[appState.historyIndex] === currentContent) {
+                    return;
+                }
+                
+                // If we're in the middle of the history, truncate forward history
+                if (appState.historyIndex < appState.history.length - 1) {
+                    appState.historyIndex++;
+                    editor.value = appState.history[appState.historyIndex];
+                    updateStatusBar();
+                }
+            }
+            
+            function cutText() {
+                if (document.execCommand) {
+                    document.execCommand('cut');
+                } else {
+                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+                    if (selectedText) {
+                        navigator.clipboard.writeText(selectedText).then(() => {
+                            deleteSelectedText();
+                        });
+                    }
+                }
+            }
+            
+            function copyText() {
+                if (document.execCommand) {
+                    document.execCommand('copy');
+                } else {
+                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+                    if (selectedText) {
+                        navigator.clipboard.writeText(selectedText);
+                    }
+                }
+            }
+            
+            function pasteText() {
+                if (document.execCommand) {
+                    document.execCommand('paste');
+                } else {
+                    navigator.clipboard.readText().then(text => {
+                        insertTextAtCursor(text);
+                    });
+                }
+            }
+            
+            function deleteText() {
+                deleteSelectedText();
+            }
+            
+            function deleteSelectedText() {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                
+                if (start !== end) {
+                    editor.value = editor.value.substring(0, start) + editor.value.substring(end);
+                    editor.selectionStart = editor.selectionEnd = start;
+                    appState.isModified = true;
+                    addToHistory();
+                    updateStatusBar();
+                }
+            }
+            
+            function insertTextAtCursor(text) {
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                
+                editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + text.length;
+                appState.isModified = true;
+                addToHistory();
+                updateStatusBar();
+            }
+            
+            function selectAll() {
+                editor.select();
+                updateStatusBar();
+            }
+            
+            function insertTimeDate() {
+                const now = new Date();
+                const formattedDate = now.toLocaleString();
+                insertTextAtCursor(formattedDate);
+            }
+            
+            // Search operations
+            function findText() {
+                searchDialog.style.display = 'block';
+                replaceContainer.style.display = 'none';
+                replaceButton.style.display = 'none';
+                replaceAllButton.style.display = 'none';
+                searchInput.focus();
+                searchInput.select();
+            }
+            
+            function replaceText() {
+                searchDialog.style.display = 'block';
+                replaceContainer.style.display = 'block';
+                replaceButton.style.display = 'inline-block';
+                replaceAllButton.style.display = 'inline-block';
+                searchInput.focus();
+                searchInput.select();
+            }
+            
+            function closeSearch() {
+                searchDialog.style.display = 'none';
+                clearSearchResults();
+            }
+            
+            function findNext() {
+                performSearch(true);
+            }
+            
+            function findPrevious() {
+                performSearch(false);
+            }
+            
+            function performSearch(forward = true) {
+                const query = searchInput.value;
+                if (!query) return;
+                
+                const text = editor.value;
+                const caseSensitive = matchCaseCheck.checked;
+                const wholeWord = wholeWordCheck.checked;
+                
+                let flags = 'g';
+                if (!caseSensitive) flags += 'i';
+                
+                let pattern;
+                if (wholeWord) {
+                    pattern = new RegExp(`\\b${escapeRegExp(query)}\\b`, flags);
+                } else {
+                    pattern = new RegExp(escapeRegExp(query), flags);
+                }
+                
+                appState.searchPattern = pattern;
+                appState.searchResults = [];
+                
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    appState.searchResults.push({
+                        index: match.index,
+                        length: match[0].length,
+                        text: match[0]
+                    });
+                }
+                
+                if (appState.searchResults.length === 0) {
+                    showToast('Search', `No matches found for "${query}"`, 'info');
+                    return;
+                }
+                
+                // Find next/previous result relative to current cursor position
+                const cursorPosition = editor.selectionStart;
+                
+                if (forward) {
+                    // Find next result after cursor
+                    let nextIndex = appState.searchResults.findIndex(result => result.index > cursorPosition);
+                    if (nextIndex === -1) nextIndex = 0; // Wrap around
+                    appState.currentSearchIndex = nextIndex;
+                } else {
+                    // Find previous result before cursor
+                    let prevIndex = appState.searchResults.length - 1;
+                    for (let i = appState.searchResults.length - 1; i >= 0; i--) {
+                        if (appState.searchResults[i].index < cursorPosition) {
+                            prevIndex = i;
+                            break;
+                        }
+                    }
+                    appState.currentSearchIndex = prevIndex;
+                }
+                
+                highlightCurrentSearchResult();
+                showToast('Search', `Match ${appState.currentSearchIndex + 1} of ${appState.searchResults.length}`, 'info');
+            }
+            
+            function highlightCurrentSearchResult() {
+                if (appState.searchResults.length === 0 || appState.currentSearchIndex < 0) return;
+                
+                const result = appState.searchResults[appState.currentSearchIndex];
+                editor.focus();
+                editor.setSelectionRange(result.index, result.index + result.length);
+                
+                // Ensure the result is visible
+                ensureVisible(result.index);
+            }
+            
+            function ensureVisible(index) {
+                // This is a simple approximation since we can't directly scroll to an index
+                // We first need to find the line number
+                const text = editor.value.substring(0, index);
+                const lines = text.split('\n');
+                const lineNumber = lines.length;
+                
+                // Estimate line height (this varies by font size and family)
+                const lineHeight = parseFloat(window.getComputedStyle(editor).lineHeight) || 20;
+                
+                // Scroll to position
+                const position = lineNumber * lineHeight;
+                const editorHeight = editor.clientHeight;
+                
+                if (position < editor.scrollTop || position > editor.scrollTop + editorHeight) {
+                    editor.scrollTop = position - editorHeight / 2;
+                }
+            }
+            
+            function clearSearchResults() {
+                appState.searchResults = [];
+                appState.currentSearchIndex = -1;
+                appState.searchPattern = null;
+            }
+            
+            function updateSearchHighlighting() {
+                if (appState.searchResults.length > 0 && appState.currentSearchIndex >= 0) {
+                    highlightCurrentSearchResult();
+                }
+            }
+            
+            function replaceOne() {
+                if (appState.searchResults.length === 0 || appState.currentSearchIndex < 0) {
+                    performSearch(true);
+                    return;
+                }
+                
+                const result = appState.searchResults[appState.currentSearchIndex];
+                const replacement = replaceInput.value;
+                
+                // Replace the text
+                editor.value = 
+                    editor.value.substring(0, result.index) + 
+                    replacement + 
+                    editor.value.substring(result.index + result.length);
+                
+                appState.isModified = true;
+                addToHistory();
+                
+                // Update search results after replacement
+                performSearch(true);
+            }
+            
+            function replaceAll() {
+                const query = searchInput.value;
+                const replacement = replaceInput.value;
+                
+                if (!query) return;
+                
+                const text = editor.value;
+                const caseSensitive = matchCaseCheck.checked;
+                const wholeWord = wholeWordCheck.checked;
+                
+                let flags = 'g';
+                if (!caseSensitive) flags += 'i';
+                
+                let pattern;
+                if (wholeWord) {
+                    pattern = new RegExp(`\\b${escapeRegExp(query)}\\b`, flags);
+                } else {
+                    pattern = new RegExp(escapeRegExp(query), flags);
+                }
+                
+                const newText = text.replace(pattern, replacement);
+                
+                if (newText === text) {
+                    showToast('Replace', `No matches found for "${query}"`, 'info');
+                    return;
+                }
+                
+                // Count replacements
+                const replacements = (text.match(pattern) || []).length;
+                
+                editor.value = newText;
+                appState.isModified = true;
+                addToHistory();
+                updateStatusBar();
+                
+                showToast('Replace', `Replaced ${replacements} occurrence${replacements !== 1 ? 's' : ''}`, 'success');
+            }
+            
+            function goToLine() {
+                const lineCount = editor.value.split('\n').length;
+                const lineNumber = prompt(`Go to line (1-${lineCount}):`);
+                
+                if (lineNumber === null || lineNumber.trim() === '') return;
+                
+                const targetLine = parseInt(lineNumber, 10);
+                if (isNaN(targetLine) || targetLine < 1 || targetLine > lineCount) {
+                    showToast('Go To Line', `Invalid line number. Please enter a number between 1 and ${lineCount}`, 'error');
+                    return;
+                }
+                
+                // Find the start index of the target line
+                const lines = editor.value.split('\n');
+                let index = 0;
+                
+                for (let i = 0; i < targetLine - 1; i++) {
+                    index += lines[i].length + 1; // +1 for the newline character
+                }
+                
+                editor.focus();
+                editor.setSelectionRange(index, index);
+                
+                // Ensure the line is visible
+                ensureVisible(index);
+            }
+            
+            // View operations
+            function toggleDarkMode() {
+                appState.darkMode = !appState.darkMode;
+                updateEditorPreferences();
+                updateUI();
+            }
+            
+            function toggleTextLines() {
+                appState.textLines = !appState.textLines;
+                updateEditorPreferences();
+                updateUI();
+            }
+            
+            function toggleWordWrap() {
+                appState.wordWrap = !appState.wordWrap;
+                updateEditorPreferences();
+                updateUI();
+            }
+            
+            function toggleWysiwygMode() {
+                appState.isWysiwygMode = !appState.isWysiwygMode;
+                updateEditorPreferences();
+                updateUI();
+                
+                if (appState.isWysiwygMode) {
+                    showToast('Mode Changed', 'Switched to WYSIWYG editing mode', 'info');
+                } else {
+                    showToast('Mode Changed', 'Switched to plain text editing mode', 'info');
+                }
+            }
+            
+            function toggleSpellCheck() {
+                appState.spellCheck = !appState.spellCheck;
+                updateEditorPreferences();
+                updateUI();
+            }
+            
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().then(() => {
+                        appState.isFullscreen = true;
+                        updateUI();
+                    });
+                } else {
+                    document.exitFullscreen().then(() => {
+                        appState.isFullscreen = false;
+                        updateUI();
+                    });
+                }
+            }
+            
+            function zoomIn() {
+                if (appState.zoomLevel < 300) {
+                    appState.zoomLevel += appState.zoomLevel < 100 ? 10 : 25;
+                    appState.fontSize = Math.round(16 * (appState.zoomLevel / 100));
+                    updateEditorPreferences();
+                    updateUI();
+                }
+            }
+            
+            function zoomOut() {
+                if (appState.zoomLevel > 30) {
+                    appState.zoomLevel -= appState.zoomLevel <= 100 ? 10 : 25;
+                    appState.fontSize = Math.round(16 * (appState.zoomLevel / 100));
+                    updateEditorPreferences();
+                    updateUI();
+                }
+            }
+            
+            function zoomReset() {
+                appState.zoomLevel = 100;
+                appState.fontSize = 16;
+                updateEditorPreferences();
+                updateUI();
+            }
+            
+            // Font settings
+            function updateFontPreview() {
+                const family = fontFamily.value;
+                const size = `${fontSize.value}px`;
+                const weight = fontBold.checked ? 'bold' : 'normal';
+                const style = fontItalic.checked ? 'italic' : 'normal';
+                const decoration = fontUnderline.checked ? 'underline' : 'none';
+                
+                fontPreview.style.fontFamily = family;
+                fontPreview.style.fontSize = size;
+                fontPreview.style.fontWeight = weight;
+                fontPreview.style.fontStyle = style;
+                fontPreview.style.textDecoration = decoration;
+            }
+            
+            function applyFontSettings() {
+                appState.fontFamily = fontFamily.value;
+                appState.fontSize = parseInt(fontSize.value, 10);
+                appState.fontWeight = fontBold.checked ? 'bold' : 'normal';
+                appState.fontStyle = fontItalic.checked ? 'italic' : 'normal';
+                appState.textDecoration = fontUnderline.checked ? 'underline' : 'none';
+                
+                updateEditorPreferences();
+            }
+            
+            // Keyboard handling
+            function handleKeyDown(e) {
+                // Handle tab key
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    
+                    // Insert tab or spaces
+                    const spaces = ' '.repeat(appState.tabSize);
+                    editor.value = editor.value.substring(0, start) + spaces + editor.value.substring(end);
+                    
+                    // Move cursor after insertion
+                    editor.selectionStart = editor.selectionEnd = start + appState.tabSize;
+                    
+                    appState.isModified = true;
+                    addToHistory();
+                    return false;
+                }
+            }
+            
+            function handleGlobalKeyDown(e) {
+                // Ctrl/Cmd combinations
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key.toLowerCase()) {
+                        case 'n':
+                            e.preventDefault();
+                            newFile();
+                            break;
+                        case 'o':
+                            e.preventDefault();
+                            openFile();
+                            break;
+                        case 's':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                saveFileAs();
+                            } else {
+                                saveFile();
+                            }
+                            break;
+                        case 'p':
+                            e.preventDefault();
+                            printFile();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            findText();
+                            break;
+                        case 'h':
+                            e.preventDefault();
+                            replaceText();
+                            break;
+                        case 'g':
+                            e.preventDefault();
+                            goToLine();
+                            break;
+                        case '+':
+                        case '=':
+                            e.preventDefault();
+                            zoomIn();
+                            break;
+                        case '-':
+                            e.preventDefault();
+                            zoomOut();
+                            break;
+                        case '0':
+                            e.preventDefault();
+                            zoomReset();
+                            break;
+                    }
+                    
+                    // Ctrl+Shift combinations
+                    if (e.shiftKey) {
+                        switch (e.key.toLowerCase()) {
+                            case 'd':
+                                e.preventDefault();
+                                toggleDarkMode();
+                                break;
+                        }
+                    }
+                } else {
+                    // Regular keys
+                    switch (e.key) {
+                        case 'F3':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                findPrevious();
+                            } else {
+                                findNext();
+                            }
+                            break;
+                        case 'F5':
+                            e.preventDefault();
+                            insertTimeDate();
+                            break;
+                        case 'F11':
+                            e.preventDefault();
+                            toggleFullscreen();
+                            break;
+                        case 'Escape':
+                            if (searchDialog.style.display === 'block') {
+                                e.preventDefault();
+                                closeSearch();
+                            }
+                            if (fileNameDialog.style.display === 'block') {
+                                e.preventDefault();
+                                cancelFileDialog();
+                            }
+                            break;
+                    }
+                }
+            }
+            
+            // Helper functions
+            function escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\                if (appState.historyIndex < appState.history.length - 1) {');
+            }
+            
+            function showToast(title, message, type = 'info') {
+                const toastElement = document.getElementById('toast');
+                const toastTitle = document.getElementById('toast-title');
+                const toastMessage = document.getElementById('toast-message');
+                const toastIcon = document.getElementById('toast-icon');
+                
+                toastTitle.textContent = title;
+                toastMessage.textContent = message;
+                
+                switch (type) {
+                    case 'success':
+                        toastIcon.textContent = 'check_circle';
+                        toastIcon.style.color = '#28a745';
+                        break;
+                    case 'error':
+                        toastIcon.textContent = 'error';
+                        toastIcon.style.color = '#dc3545';
+                        break;
+                    case 'warning':
+                        toastIcon.textContent = 'warning';
+                        toastIcon.style.color = '#ffc107';
+                        break;
+                    default:
+                        toastIcon.textContent = 'info';
+                        toastIcon.style.color = '#17a2b8';
+                }
+                
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+            }
+        });
+
+        // FileSaver.js - for saving files
+        (function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){f(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
+    </script>
+</body>
+</html>
+                    appState.history = appState.history.slice(0, appState.historyIndex + 1);
+                }
+                
+                // Add new history entry
+                appState.history.push(currentContent);
+                appState.historyIndex++;
+                
+                // Limit history size
+                if (appState.history.length > appState.maxHistory) {
+                    appState.history.shift();
+                    appState.historyIndex--;
+                }
+            }
+            
+            function undo() {
+                if (appState.historyIndex > 0) {
+                    appState.historyIndex--;
+                    editor.value = appState.history[appState.historyIndex];
+                    updateStatusBar();
+                }
+            }
+            
+            function redo() {
+                if (appState.historyIndex < appState.history.length - 1) {

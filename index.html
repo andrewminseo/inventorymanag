@@ -1,1898 +1,874 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Notepad Pro | Modern Text Editor</title>
-    <meta name="description" content="A modern, feature-rich notepad for all your text editing needs. No login required.">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         :root {
-            --bg-color: #f8f9fa;
-            --text-color: #212529;
-            --menu-hover: #e9ecef;
-            --border-color: #dee2e6;
-            --paper-color: #ffffff;
-            --notebook-line: #e0e0e0;
-            --notebook-margin: #f0d0c0;
-            --toolbar-bg: #f8f9fa;
-            --status-bg: #f8f9fa;
-            --scrollbar-track: #f1f1f1;
-            --scrollbar-thumb: #c1c1c1;
-            --scrollbar-thumb-hover: #a8a8a8;
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
         }
-
-        [data-bs-theme="dark"] {
-            --bg-color: #212529;
-            --text-color: #f8f9fa;
-            --menu-hover: #343a40;
-            --border-color: #495057;
-            --paper-color: #343a40;
-            --notebook-line: #495057;
-            --notebook-margin: #554433;
-            --toolbar-bg: #343a40;
-            --status-bg: #343a40;
-            --scrollbar-track: #2c3034;
-            --scrollbar-thumb: #495057;
-            --scrollbar-thumb-hover: #6c757d;
-        }
-
-        html, body {
-            height: 100%;
+        
+        * {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .app-container {
+        
+        body {
+            background-color: #f5f5f5;
+        }
+        
+        .container {
             display: flex;
-            flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
         }
-
-        .menubar {
-            background-color: var(--bg-color);
-            border-bottom: 1px solid var(--border-color);
-            padding: 0;
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            transition: all 0.3s;
         }
-
-        .menubar .nav-link {
-            color: var(--text-color);
-            padding: 0.5rem 1rem;
-            border-radius: 0;
-        }
-
-        .menubar .nav-link:hover {
-            background-color: var(--menu-hover);
-        }
-
-        .dropdown-menu {
-            border-radius: 0;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-color);
-        }
-
-        .dropdown-item {
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-        }
-
-        .dropdown-item:hover {
-            background-color: var(--menu-hover);
-        }
-
-        .dropdown-item i, .dropdown-item .material-icons {
-            margin-right: 8px;
-            width: 24px;
+        
+        .sidebar-header {
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-
-        .toolbar {
-            padding: 0.25rem;
-            background-color: var(--toolbar-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            flex-wrap: wrap;
+        
+        .sidebar-header h3 {
+            margin-bottom: 10px;
         }
-
-        .toolbar .btn {
-            border-radius: 2px;
-            margin: 0.125rem;
-            padding: 0.25rem 0.5rem;
-            color: var(--text-color);
-            background-color: transparent;
-            border: 1px solid transparent;
+        
+        .sidebar-menu {
+            padding: 20px 0;
         }
-
-        .toolbar .btn:hover {
-            background-color: var(--menu-hover);
-            border-color: var(--border-color);
-        }
-
-        .toolbar .btn.active {
-            background-color: var(--menu-hover);
-            border-color: var(--border-color);
-        }
-
-        .toolbar .btn i, .toolbar .btn .material-icons {
-            font-size: 1.25rem;
-        }
-
-        .toolbar .divider {
-            width: 1px;
-            background-color: var(--border-color);
-            height: 24px;
-            margin: 0 0.5rem;
-        }
-
-        .text-container {
-            flex: 1;
-            position: relative;
-            overflow: hidden;
-        }
-
-        #editor {
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            overflow-y: auto;
-            padding: 1rem;
-            background-color: var(--paper-color);
-            color: var(--text-color);
-            font-size: 16px;
-            line-height: 1.5;
-            tab-size: 4;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            border: none;
-            resize: none;
-        }
-
-        #editor:focus {
-            outline: none;
-        }
-
-        .lined-paper #editor {
-            background-color: var(--paper-color);
-            background-image: linear-gradient(
-                90deg, 
-                var(--notebook-margin) 0px, 
-                var(--notebook-margin) 40px, 
-                transparent 40px
-            ), 
-            linear-gradient(
-                var(--paper-color) 23px, 
-                var(--notebook-line) 23px, 
-                var(--notebook-line) 24px, 
-                var(--paper-color) 24px
-            );
-            background-size: 100% 100%, 100% 24px;
-            line-height: 24px;
-            padding-left: 50px;
-        }
-
-        .status-bar {
-            height: 24px;
-            border-top: 1px solid var(--border-color);
-            background-color: var(--status-bg);
+        
+        .menu-item {
+            padding: 10px 20px;
+            transition: all 0.3s;
+            cursor: pointer;
             display: flex;
             align-items: center;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .menu-item.active {
+            background-color: var(--primary-color);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            display: flex;
             justify-content: space-between;
-            padding: 0 1rem;
-            font-size: 12px;
-            color: var(--text-color);
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
         }
-
-        .status-bar .status-item {
-            display: inline-block;
-            margin-right: 1rem;
+        
+        .header h1 {
+            color: var(--secondary-color);
         }
-
-        /* Scrollbar styling */
-        #editor::-webkit-scrollbar {
-            width: 12px;
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
         }
-
-        #editor::-webkit-scrollbar-track {
-            background: var(--scrollbar-track);
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            margin-left: 20px;
         }
-
-        #editor::-webkit-scrollbar-thumb {
-            background-color: var(--scrollbar-thumb);
-            border-radius: 6px;
-            border: 3px solid var(--scrollbar-track);
+        
+        .user-profile img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
         }
-
-        #editor::-webkit-scrollbar-thumb:hover {
-            background: var(--scrollbar-thumb-hover);
+        
+        /* Dashboard Cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
         }
-
-        /* File dialog */
-        .file-dialog {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            padding: 1.5rem;
-            width: 400px;
-            max-width: 90%;
-            z-index: 1100;
+        
+        .card {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+        
+        .card-icon.primary {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: var(--primary-color);
+        }
+        
+        .card-icon.success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+        }
+        
+        .card-icon.warning {
+            background-color: rgba(243, 156, 18, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .card-icon.danger {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+        
+        .card-description {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        /* Data Tables */
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .data-table thead {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .data-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .data-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status.in-stock {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+        }
+        
+        .status.low-stock {
+            background-color: rgba(243, 156, 18, 0.2);
+            color: var(--warning-color);
+        }
+        
+        .status.out-of-stock {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .edit-btn {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: var(--primary-color);
+        }
+        
+        .delete-btn {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        /* Modal Styles */
+        .modal {
             display: none;
-        }
-
-        /* Toast notifications */
-        .toast-container {
             position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            z-index: 1100;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            overflow: auto;
         }
-
-        /* Keyboard shortcuts information */
-        .shortcuts-dialog {
-            max-height: 80vh;
-            overflow-y: auto;
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 50%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s;
         }
-
-        .shortcuts-table th, .shortcuts-table td {
-            padding: 0.5rem 1rem;
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-
-        .kbd {
-            display: inline-block;
-            padding: 3px 5px;
-            font-size: 11px;
-            line-height: 10px;
-            color: #444d56;
-            vertical-align: middle;
-            background-color: #fafbfc;
-            border: solid 1px #c6cbd1;
-            border-bottom-color: #959da5;
-            border-radius: 3px;
-            box-shadow: inset 0 -1px 0 #959da5;
-        }
-
-        [data-bs-theme="dark"] .kbd {
-            color: #c9d1d9;
-            background-color: #1b1f24;
-            border-color: #30363d;
-            border-bottom-color: #6e7681;
-            box-shadow: inset 0 -1px 0 #6e7681;
-        }
-
-        /* Search dialog */
-        .search-dialog {
-            position: absolute;
-            top: 50px;
-            right: 10px;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            padding: 1rem;
-            min-width: 300px;
-            z-index: 1100;
-            display: none;
-        }
-
-        /* WYSIWYG toolbar */
-        .formatting-toolbar {
+        
+        .modal-header {
             display: flex;
-            flex-wrap: wrap;
-            padding: 0.25rem;
-            background-color: var(--toolbar-bg);
-            border-bottom: 1px solid var(--border-color);
-            display: none;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
         }
-
-        .wysiwyg-mode .formatting-toolbar {
+        
+        .modal-title {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+        }
+        
+        .close-btn {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-row {
             display: flex;
+            gap: 10px;
         }
-
-        /* Small screens adjustments */
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        /* Login Page */
+        .login-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .login-image {
+            flex: 1;
+            background-image: url('/api/placeholder/800/600');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .login-form-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 40px;
+        }
+        
+        .login-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        /* Responsive Styles */
         @media (max-width: 768px) {
-            .toolbar .btn-label {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
                 display: none;
             }
             
-            .toolbar .divider {
-                margin: 0 0.25rem;
+            .sidebar.active {
+                display: block;
             }
             
-            .menubar .nav-link {
-                padding: 0.5rem;
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 90%;
+            }
+            
+            .login-container {
+                flex-direction: column;
+            }
+            
+            .login-image {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Top Menu Bar -->
-        <div class="menubar">
-            <nav class="nav">
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        File
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="new-file"><i class="material-icons">note_add</i> New</a></li>
-                        <li><a class="dropdown-item" href="#" id="open-file"><i class="material-icons">folder_open</i> Open...</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="save-file"><i class="material-icons">save</i> Save</a></li>
-                        <li><a class="dropdown-item" href="#" id="save-as-file"><i class="material-icons">save_as</i> Save As...</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="print-file"><i class="material-icons">print</i> Print...</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="exit-app"><i class="material-icons">exit_to_app</i> Exit</a></li>
-                    </ul>
+    <!-- Login Page (Initially Hidden) -->
+    <div id="login-page" style="display: none;">
+        <div class="login-container">
+            <div class="login-image"></div>
+            <div class="login-form-container">
+                <div class="login-header">
+                    <h1>Inventory Management System</h1>
+                    <p>Enter your credentials to access the dashboard</p>
                 </div>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Edit
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="undo-action"><i class="material-icons">undo</i> Undo</a></li>
-                        <li><a class="dropdown-item" href="#" id="redo-action"><i class="material-icons">redo</i> Redo</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="cut-text"><i class="material-icons">content_cut</i> Cut</a></li>
-                        <li><a class="dropdown-item" href="#" id="copy-text"><i class="material-icons">content_copy</i> Copy</a></li>
-                        <li><a class="dropdown-item" href="#" id="paste-text"><i class="material-icons">content_paste</i> Paste</a></li>
-                        <li><a class="dropdown-item" href="#" id="delete-text"><i class="material-icons">delete</i> Delete</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="select-all"><i class="material-icons">select_all</i> Select All</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="time-date"><i class="material-icons">access_time</i> Time/Date</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Format
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="toggle-word-wrap"><i class="material-icons" id="wrap-icon">wrap_text</i> Word Wrap</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#fontModal"><i class="material-icons">text_format</i> Font...</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="toggle-wysiwyg"><i class="material-icons">wysiwyg</i> WYSIWYG Mode</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        View
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="toggle-dark-mode"><i class="material-icons" id="theme-icon">dark_mode</i> Dark Mode</a></li>
-                        <li><a class="dropdown-item" href="#" id="toggle-text-lines"><i class="material-icons" id="lines-icon">horizontal_rule</i> Text Lines</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="zoom-in"><i class="material-icons">zoom_in</i> Zoom In</a></li>
-                        <li><a class="dropdown-item" href="#" id="zoom-out"><i class="material-icons">zoom_out</i> Zoom Out</a></li>
-                        <li><a class="dropdown-item" href="#" id="zoom-reset"><i class="material-icons">zoom_out_map</i> Reset Zoom</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="toggle-fullscreen"><i class="material-icons" id="fullscreen-icon">fullscreen</i> Fullscreen</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Search
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" id="find-text"><i class="material-icons">search</i> Find...</a></li>
-                        <li><a class="dropdown-item" href="#" id="find-next"><i class="material-icons">navigate_next</i> Find Next</a></li>
-                        <li><a class="dropdown-item" href="#" id="find-previous"><i class="material-icons">navigate_before</i> Find Previous</a></li>
-                        <li><a class="dropdown-item" href="#" id="replace-text"><i class="material-icons">find_replace</i> Replace...</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="go-to-line"><i class="material-icons">vertical_align_center</i> Go To Line...</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Help
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#shortcutsModal"><i class="material-icons">keyboard</i> Keyboard Shortcuts</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal"><i class="material-icons">info</i> About Notepad Pro</a></li>
-                    </ul>
-                </div>
-            </nav>
-        </div>
-
-        <!-- Main Toolbar -->
-        <div class="toolbar" id="main-toolbar">
-            <button class="btn" id="toolbar-new" title="New (Ctrl+N)">
-                <i class="material-icons">note_add</i>
-            </button>
-            <button class="btn" id="toolbar-open" title="Open (Ctrl+O)">
-                <i class="material-icons">folder_open</i>
-            </button>
-            <button class="btn" id="toolbar-save" title="Save (Ctrl+S)">
-                <i class="material-icons">save</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="toolbar-cut" title="Cut (Ctrl+X)">
-                <i class="material-icons">content_cut</i>
-            </button>
-            <button class="btn" id="toolbar-copy" title="Copy (Ctrl+C)">
-                <i class="material-icons">content_copy</i>
-            </button>
-            <button class="btn" id="toolbar-paste" title="Paste (Ctrl+V)">
-                <i class="material-icons">content_paste</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="toolbar-undo" title="Undo (Ctrl+Z)">
-                <i class="material-icons">undo</i>
-            </button>
-            <button class="btn" id="toolbar-redo" title="Redo (Ctrl+Y)">
-                <i class="material-icons">redo</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="toolbar-find" title="Find (Ctrl+F)">
-                <i class="material-icons">search</i>
-            </button>
-            <button class="btn" id="toolbar-replace" title="Replace (Ctrl+H)">
-                <i class="material-icons">find_replace</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="toolbar-zoom-out" title="Zoom Out (Ctrl+-)">
-                <i class="material-icons">zoom_out</i>
-            </button>
-            <button class="btn" id="toolbar-zoom-in" title="Zoom In (Ctrl++)">
-                <i class="material-icons">zoom_in</i>
-            </button>
-            <div class="d-none d-md-block divider"></div>
-            <button class="btn d-none d-md-inline-block" id="toolbar-spell-check" title="Spell Check">
-                <i class="material-icons">spellcheck</i>
-                <span class="btn-label">Spell Check</span>
-            </button>
-            <button class="btn d-none d-md-inline-block" id="toolbar-print" title="Print (Ctrl+P)">
-                <i class="material-icons">print</i>
-                <span class="btn-label">Print</span>
-            </button>
-        </div>
-
-        <!-- Formatting Toolbar (visible in WYSIWYG mode) -->
-        <div class="formatting-toolbar">
-            <button class="btn" id="format-bold" title="Bold (Ctrl+B)">
-                <i class="material-icons">format_bold</i>
-            </button>
-            <button class="btn" id="format-italic" title="Italic (Ctrl+I)">
-                <i class="material-icons">format_italic</i>
-            </button>
-            <button class="btn" id="format-underline" title="Underline (Ctrl+U)">
-                <i class="material-icons">format_underline</i>
-            </button>
-            <button class="btn" id="format-strikethrough" title="Strikethrough">
-                <i class="material-icons">strikethrough_s</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="format-align-left" title="Align Left">
-                <i class="material-icons">format_align_left</i>
-            </button>
-            <button class="btn" id="format-align-center" title="Align Center">
-                <i class="material-icons">format_align_center</i>
-            </button>
-            <button class="btn" id="format-align-right" title="Align Right">
-                <i class="material-icons">format_align_right</i>
-            </button>
-            <button class="btn" id="format-align-justify" title="Justify">
-                <i class="material-icons">format_align_justify</i>
-            </button>
-            <div class="divider"></div>
-            <button class="btn" id="format-list-bulleted" title="Bulleted List">
-                <i class="material-icons">format_list_bulleted</i>
-            </button>
-            <button class="btn" id="format-list-numbered" title="Numbered List">
-                <i class="material-icons">format_list_numbered</i>
-            </button>
-            <button class="btn" id="format-indent-increase" title="Increase Indent">
-                <i class="material-icons">format_indent_increase</i>
-            </button>
-            <button class="btn" id="format-indent-decrease" title="Decrease Indent">
-                <i class="material-icons">format_indent_decrease</i>
-            </button>
-        </div>
-
-        <!-- Main Text Container -->
-        <div class="text-container">
-            <textarea id="editor" spellcheck="false" placeholder="Start typing..."></textarea>
-        </div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <div class="status-left">
-                <span class="status-item" id="status-lines">Lines: 1</span>
-                <span class="status-item" id="status-words">Words: 0</span>
-                <span class="status-item" id="status-chars">Characters: 0</span>
-            </div>
-            <div class="status-right">
-                <span class="status-item" id="status-position">Ln 1, Col 1</span>
-                <span class="status-item" id="status-encoding">UTF-8</span>
-                <span class="status-item" id="status-zoom">100%</span>
-            </div>
-        </div>
-
-        <!-- File Name Dialog -->
-        <div class="file-dialog" id="file-name-dialog">
-            <div class="mb-3">
-                <label for="file-name-input" class="form-label">Enter file name:</label>
-                <input type="text" class="form-control" id="file-name-input" placeholder="untitled.txt">
-            </div>
-            <div class="d-flex justify-content-end">
-                <button type="button" class="btn btn-secondary me-2" id="file-dialog-cancel">Cancel</button>
-                <button type="button" class="btn btn-primary" id="file-dialog-save">Save</button>
-            </div>
-        </div>
-
-        <!-- Search Dialog -->
-        <div class="search-dialog" id="search-dialog">
-            <div class="mb-3">
-                <label for="search-input" class="form-label">Find what:</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="search-input">
-                    <button class="btn btn-outline-secondary" type="button" id="search-next">
-                        <i class="material-icons">arrow_downward</i>
-                    </button>
-                    <button class="btn btn-outline-secondary" type="button" id="search-prev">
-                        <i class="material-icons">arrow_upward</i>
-                    </button>
-                </div>
-            </div>
-            <div class="mb-3" id="replace-container" style="display: none;">
-                <label for="replace-input" class="form-label">Replace with:</label>
-                <input type="text" class="form-control" id="replace-input">
-            </div>
-            <div class="mb-3">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="match-case-check">
-                    <label class="form-check-label" for="match-case-check">
-                        Match case
-                    </label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="whole-word-check">
-                    <label class="form-check-label" for="whole-word-check">
-                        Match whole word
-                    </label>
-                </div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary" id="search-close">Close</button>
-                <div>
-                    <button type="button" class="btn btn-secondary me-2" id="replace-button" style="display: none;">Replace</button>
-                    <button type="button" class="btn btn-primary" id="replace-all-button" style="display: none;">Replace All</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Toast container for notifications -->
-        <div class="toast-container position-fixed bottom-0 end-0 p-3">
-            <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <i class="material-icons me-2" id="toast-icon">info</i>
-                    <strong class="me-auto" id="toast-title">Notification</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-                <div class="toast-body" id="toast-message">
-                    This is a notification message.
-                </div>
-            </div>
-        </div>
-
-        <!-- Hidden file input for opening files -->
-        <input type="file" id="file-input" style="display: none;" accept=".txt,.text,.md,.html,.css,.js,.json,.xml,.csv">
-
-        <!-- Font Modal -->
-        <div class="modal fade" id="fontModal" tabindex="-1" aria-labelledby="fontModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="fontModalLabel">Font</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="login-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="Enter your email">
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="font-family" class="form-label">Font:</label>
-                            <select class="form-select" id="font-family">
-                                <option value="'Segoe UI', sans-serif">Segoe UI</option>
-                                <option value="Arial, sans-serif">Arial</option>
-                                <option value="'Times New Roman', serif">Times New Roman</option>
-                                <option value="'Courier New', monospace">Courier New</option>
-                                <option value="Georgia, serif">Georgia</option>
-                                <option value="Verdana, sans-serif">Verdana</option>
-                                <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
-                                <option value="Impact, sans-serif">Impact</option>
-                                <option value="'Lucida Console', monospace">Lucida Console</option>
-                                <option value="Tahoma, sans-serif">Tahoma</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="font-size" class="form-label">Size:</label>
-                            <select class="form-select" id="font-size">
-                                <option value="10">10</option>
-                                <option value="12">12</option>
-                                <option value="14">14</option>
-                                <option value="16" selected>16</option>
-                                <option value="18">18</option>
-                                <option value="20">20</option>
-                                <option value="22">22</option>
-                                <option value="24">24</option>
-                                <option value="28">28</option>
-                                <option value="32">32</option>
-                                <option value="36">36</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Style:</label>
-                            <div class="d-flex gap-2">
-                                <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="font-bold">
-                                <label class="form-check-label" for="font-bold">Bold</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="font-italic">
-                                <label class="form-check-label" for="font-italic">Italic</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="font-underline">
-                                <label class="form-check-label" for="font-underline">Underline</label>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Preview:</label>
-                            <div class="border p-3 text-center" id="font-preview">
-                                The quick brown fox jumps over the lazy dog.
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Enter your password">
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="font-apply" data-bs-dismiss="modal">Apply</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Shortcuts Modal -->
-        <div class="modal fade" id="shortcutsModal" tabindex="-1" aria-labelledby="shortcutsModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="shortcutsModalLabel">Keyboard Shortcuts</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body shortcuts-dialog">
-                        <table class="table shortcuts-table">
-                            <thead>
-                                <tr>
-                                    <th>Action</th>
-                                    <th>Shortcut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>New Document</td><td><span class="kbd">Ctrl</span> + <span class="kbd">N</span></td></tr>
-                                <tr><td>Open File</td><td><span class="kbd">Ctrl</span> + <span class="kbd">O</span></td></tr>
-                                <tr><td>Save</td><td><span class="kbd">Ctrl</span> + <span class="kbd">S</span></td></tr>
-                                <tr><td>Save As</td><td><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">S</span></td></tr>
-                                <tr><td>Print</td><td><span class="kbd">Ctrl</span> + <span class="kbd">P</span></td></tr>
-                                <tr><td>Close</td><td><span class="kbd">Alt</span> + <span class="kbd">F4</span></td></tr>
-                                <tr><td>Undo</td><td><span class="kbd">Ctrl</span> + <span class="kbd">Z</span></td></tr>
-                                <tr><td>Redo</td><td><span class="kbd">Ctrl</span> + <span class="kbd">Y</span></td></tr>
-                                <tr><td>Cut</td><td><span class="kbd">Ctrl</span> + <span class="kbd">X</span></td></tr>
-                                <tr><td>Copy</td><td><span class="kbd">Ctrl</span> + <span class="kbd">C</span></td></tr>
-                                <tr><td>Paste</td><td><span class="kbd">Ctrl</span> + <span class="kbd">V</span></td></tr>
-                                <tr><td>Select All</td><td><span class="kbd">Ctrl</span> + <span class="kbd">A</span></td></tr>
-                                <tr><td>Find</td><td><span class="kbd">Ctrl</span> + <span class="kbd">F</span></td></tr>
-                                <tr><td>Find Next</td><td><span class="kbd">F3</span></td></tr>
-                                <tr><td>Find Previous</td><td><span class="kbd">Shift</span> + <span class="kbd">F3</span></td></tr>
-                                <tr><td>Replace</td><td><span class="kbd">Ctrl</span> + <span class="kbd">H</span></td></tr>
-                                <tr><td>Go To Line</td><td><span class="kbd">Ctrl</span> + <span class="kbd">G</span></td></tr>
-                                <tr><td>Time/Date</td><td><span class="kbd">F5</span></td></tr>
-                                <tr><td>Zoom In</td><td><span class="kbd">Ctrl</span> + <span class="kbd">+</span></td></tr>
-                                <tr><td>Zoom Out</td><td><span class="kbd">Ctrl</span> + <span class="kbd">-</span></td></tr>
-                                <tr><td>Reset Zoom</td><td><span class="kbd">Ctrl</span> + <span class="kbd">0</span></td></tr>
-                                <tr><td>Toggle Dark Mode</td><td><span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">D</span></td></tr>
-                                <tr><td>Toggle Fullscreen</td><td><span class="kbd">F11</span></td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- About Modal -->
-        <div class="modal fade" id="aboutModal" tabindex="-1" aria-labelledby="aboutModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="aboutModalLabel">About Notepad Pro</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="text-center mb-4">
-                            <i class="material-icons" style="font-size: 4rem;">description</i>
-                            <h4 class="mt-2">Notepad Pro</h4>
-                            <p class="text-muted">Version 1.0.0</p>
-                        </div>
-                        <p>A modern, feature-rich text editor for all your writing needs. Notepad Pro combines the simplicity of traditional notepad with advanced features for a better writing experience.</p>
-                        <p>Features include:</p>
-                        <ul>
-                            <li>Dark mode support</li>
-                            <li>Syntax highlighting</li>
-                            <li>Find and replace functionality</li>
-                            <li>Line numbers and text statistics</li>
-                            <li>Auto-save and recovery</li>
-                            <li>Customizable interface</li>
-                            <li>WYSIWYG editing mode</li>
-                        </ul>
-                        <p class="mt-3 text-center">© 2025 Notepad Pro Team</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                    </div>
+                    <button class="btn btn-primary" style="width: 100%;" onclick="login()">Login</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-        // Core app functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // DOM Elements
-            const editor = document.getElementById('editor');
-            const fileInput = document.getElementById('file-input');
-            const fileNameDialog = document.getElementById('file-name-dialog');
-            const fileNameInput = document.getElementById('file-name-input');
-            const fileDialogSave = document.getElementById('file-dialog-save');
-            const fileDialogCancel = document.getElementById('file-dialog-cancel');
-            const searchDialog = document.getElementById('search-dialog');
-            const searchInput = document.getElementById('search-input');
-            const replaceInput = document.getElementById('replace-input');
-            const replaceContainer = document.getElementById('replace-container');
-            const replaceButton = document.getElementById('replace-button');
-            const replaceAllButton = document.getElementById('replace-all-button');
-            const searchClose = document.getElementById('search-close');
-            const matchCaseCheck = document.getElementById('match-case-check');
-            const wholeWordCheck = document.getElementById('whole-word-check');
-            const searchNext = document.getElementById('search-next');
-            const searchPrev = document.getElementById('search-prev');
-            const toast = document.getElementById('toast');
-            const toastInstance = new bootstrap.Toast(toast);
-            const fontFamily = document.getElementById('font-family');
-            const fontSize = document.getElementById('font-size');
-            const fontBold = document.getElementById('font-bold');
-            const fontItalic = document.getElementById('font-italic');
-            const fontUnderline = document.getElementById('font-underline');
-            const fontPreview = document.getElementById('font-preview');
-            const fontApply = document.getElementById('font-apply');
-            
-            // Status bar elements
-            const statusLines = document.getElementById('status-lines');
-            const statusWords = document.getElementById('status-words');
-            const statusChars = document.getElementById('status-chars');
-            const statusPosition = document.getElementById('status-position');
-            const statusZoom = document.getElementById('status-zoom');
-            
-            // App state
-            let appState = {
-                currentFile: null,
-                currentFilename: 'untitled.txt',
-                isModified: false,
-                darkMode: false,
-                fontSize: 16,
-                fontFamily: "'Segoe UI', sans-serif",
-                fontWeight: 'normal',
-                fontStyle: 'normal',
-                textDecoration: 'none',
-                lineHeight: 1.5,
-                wordWrap: true,
-                zoomLevel: 100,
-                textLines: false,
-                isWysiwygMode: false,
-                searchPattern: null,
-                history: [],
-                historyIndex: -1,
-                maxHistory: 100,
-                searchResults: [],
-                currentSearchIndex: -1,
-                spellCheck: false,
-                autoSave: true,
-                autoSaveInterval: 2 * 60 * 1000, // 2 minutes
-                tabSize: 4,
-                isFullscreen: false
-            };
-            
-            // Initialize app
-            initApp();
-            
-            function initApp() {
-                // Load saved preferences
-                loadPreferences();
-                
-                // Set initial editor state
-                updateEditorPreferences();
-                
-                // Set up event listeners
-                setupEventListeners();
-                
-                // Initialize auto-save
-                setupAutoSave();
-                
-                // Try to restore previous session
-                restoreSession();
-                
-                // Update UI
-                updateUI();
-                
-                // Update the status bar
-                updateStatusBar();
-                
-                // Focus the editor
-                editor.focus();
-            }
-            
-            function loadPreferences() {
-                try {
-                    const savedState = localStorage.getItem('notepadProState');
-                    if (savedState) {
-                        const parsedState = JSON.parse(savedState);
-                        // Only load preferences, not content
-                        appState = { ...appState, ...parsedState };
-                        // Don't restore history from saved state
-                        appState.history = [];
-                        appState.historyIndex = -1;
-                    }
-                    
-                    // Check system preference for dark mode
-                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                        appState.darkMode = true;
-                    }
-                } catch (e) {
-                    console.error('Error loading preferences:', e);
-                    showToast('Error', 'Failed to load preferences', 'error');
-                }
-            }
-            
-            function savePreferences() {
-                try {
-                    // Only save preferences, not content
-                    const stateToSave = { ...appState };
-                    delete stateToSave.history;
-                    delete stateToSave.historyIndex;
-                    localStorage.setItem('notepadProState', JSON.stringify(stateToSave));
-                } catch (e) {
-                    console.error('Error saving preferences:', e);
-                }
-            }
-            
-            function updateEditorPreferences() {
-                // Update editor appearance based on preferences
-                editor.style.fontSize = `${appState.fontSize}px`;
-                editor.style.fontFamily = appState.fontFamily;
-                editor.style.fontWeight = appState.fontWeight;
-                editor.style.fontStyle = appState.fontStyle;
-                editor.style.textDecoration = appState.textDecoration;
-                editor.style.lineHeight = appState.lineHeight;
-                editor.style.whiteSpace = appState.wordWrap ? 'pre-wrap' : 'pre';
-                editor.style.tabSize = appState.tabSize;
-                editor.spellcheck = appState.spellCheck;
-                
-                // Update document theme
-                document.documentElement.setAttribute('data-bs-theme', appState.darkMode ? 'dark' : 'light');
-                
-                // Update lined paper appearance
-                const textContainer = document.querySelector('.text-container');
-                if (appState.textLines) {
-                    textContainer.classList.add('lined-paper');
-                } else {
-                    textContainer.classList.remove('lined-paper');
-                }
-                
-                // Update WYSIWYG mode
-                document.body.classList.toggle('wysiwyg-mode', appState.isWysiwygMode);
-                if (appState.isWysiwygMode) {
-                    editor.contentEditable = 'true';
-                } else {
-                    editor.contentEditable = 'false';
-                }
-            }
-            
-            function setupEventListeners() {
-                // File operations
-                document.getElementById('new-file').addEventListener('click', newFile);
-                document.getElementById('open-file').addEventListener('click', openFile);
-                document.getElementById('save-file').addEventListener('click', saveFile);
-                document.getElementById('save-as-file').addEventListener('click', saveFileAs);
-                document.getElementById('print-file').addEventListener('click', printFile);
-                document.getElementById('exit-app').addEventListener('click', exitApp);
-                
-                // Toolbar buttons
-                document.getElementById('toolbar-new').addEventListener('click', newFile);
-                document.getElementById('toolbar-open').addEventListener('click', openFile);
-                document.getElementById('toolbar-save').addEventListener('click', saveFile);
-                document.getElementById('toolbar-cut').addEventListener('click', cutText);
-                document.getElementById('toolbar-copy').addEventListener('click', copyText);
-                document.getElementById('toolbar-paste').addEventListener('click', pasteText);
-                document.getElementById('toolbar-undo').addEventListener('click', undo);
-                document.getElementById('toolbar-redo').addEventListener('click', redo);
-                document.getElementById('toolbar-find').addEventListener('click', findText);
-                document.getElementById('toolbar-replace').addEventListener('click', replaceText);
-                document.getElementById('toolbar-zoom-out').addEventListener('click', zoomOut);
-                document.getElementById('toolbar-zoom-in').addEventListener('click', zoomIn);
-                document.getElementById('toolbar-spell-check').addEventListener('click', toggleSpellCheck);
-                document.getElementById('toolbar-print').addEventListener('click', printFile);
-                
-                // Edit operations
-                document.getElementById('undo-action').addEventListener('click', undo);
-                document.getElementById('redo-action').addEventListener('click', redo);
-                document.getElementById('cut-text').addEventListener('click', cutText);
-                document.getElementById('copy-text').addEventListener('click', copyText);
-                document.getElementById('paste-text').addEventListener('click', pasteText);
-                document.getElementById('delete-text').addEventListener('click', deleteText);
-                document.getElementById('select-all').addEventListener('click', selectAll);
-                document.getElementById('time-date').addEventListener('click', insertTimeDate);
-                
-                // View operations
-                document.getElementById('toggle-dark-mode').addEventListener('click', toggleDarkMode);
-                document.getElementById('toggle-text-lines').addEventListener('click', toggleTextLines);
-                document.getElementById('zoom-in').addEventListener('click', zoomIn);
-                document.getElementById('zoom-out').addEventListener('click', zoomOut);
-                document.getElementById('zoom-reset').addEventListener('click', zoomReset);
-                document.getElementById('toggle-fullscreen').addEventListener('click', toggleFullscreen);
-                
-                // Format operations
-                document.getElementById('toggle-word-wrap').addEventListener('click', toggleWordWrap);
-                document.getElementById('toggle-wysiwyg').addEventListener('click', toggleWysiwygMode);
-                
-                // Search operations
-                document.getElementById('find-text').addEventListener('click', findText);
-                document.getElementById('find-next').addEventListener('click', findNext);
-                document.getElementById('find-previous').addEventListener('click', findPrevious);
-                document.getElementById('replace-text').addEventListener('click', replaceText);
-                document.getElementById('go-to-line').addEventListener('click', goToLine);
-                
-                // Search dialog operations
-                searchNext.addEventListener('click', findNext);
-                searchPrev.addEventListener('click', findPrevious);
-                searchClose.addEventListener('click', closeSearch);
-                replaceButton.addEventListener('click', replaceOne);
-                replaceAllButton.addEventListener('click', replaceAll);
-                
-                // File dialog operations
-                fileDialogSave.addEventListener('click', saveFileWithName);
-                fileDialogCancel.addEventListener('click', cancelFileDialog);
-                
-                // File input change
-                fileInput.addEventListener('change', handleFileSelection);
-                
-                // Editor events
-                editor.addEventListener('input', () => {
-                    appState.isModified = true;
-                    updateStatusBar();
-                    addToHistory();
-                });
-                
-                editor.addEventListener('keydown', handleKeyDown);
-                editor.addEventListener('click', () => updateStatusBar());
-                editor.addEventListener('scroll', () => {
-                    // Update search highlighting on scroll
-                    if (appState.searchResults.length > 0) {
-                        updateSearchHighlighting();
-                    }
-                });
-                
-                // Font preview events
-                fontFamily.addEventListener('change', updateFontPreview);
-                fontSize.addEventListener('change', updateFontPreview);
-                fontBold.addEventListener('change', updateFontPreview);
-                fontItalic.addEventListener('change', updateFontPreview);
-                fontUnderline.addEventListener('change', updateFontPreview);
-                fontApply.addEventListener('click', applyFontSettings);
-                
-                // Global keyboard shortcuts
-                document.addEventListener('keydown', handleGlobalKeyDown);
-                
-                // Window events
-                window.addEventListener('beforeunload', (e) => {
-                    if (appState.isModified && !appState.autoSave) {
-                        e.preventDefault();
-                        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-                        return e.returnValue;
-                    }
-                });
-                
-                // System theme change detection
-                if (window.matchMedia) {
-                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-                        if (e.matches) {
-                            // Only change if not explicitly set by user
-                            if (appState.darkMode === undefined) {
-                                appState.darkMode = true;
-                                updateEditorPreferences();
-                                updateUI();
-                            }
-                        } else {
-                            if (appState.darkMode === undefined) {
-                                appState.darkMode = false;
-                                updateEditorPreferences();
-                                updateUI();
-                            }
-                        }
-                    });
-                }
-            }
-            
-            function setupAutoSave() {
-                if (appState.autoSave) {
-                    setInterval(() => {
-                        if (appState.isModified) {
-                            saveToLocalStorage();
-                        }
-                    }, appState.autoSaveInterval);
-                }
-            }
-            
-            function saveToLocalStorage() {
-                try {
-                    localStorage.setItem('notepadProContent', editor.value);
-                    localStorage.setItem('notepadProFilename', appState.currentFilename);
-                    localStorage.setItem('notepadProLastSave', new Date().toISOString());
-                } catch (e) {
-                    console.error('Error saving to local storage:', e);
-                }
-            }
-            
-            function restoreSession() {
-                try {
-                    const savedContent = localStorage.getItem('notepadProContent');
-                    const savedFilename = localStorage.getItem('notepadProFilename');
-                    const lastSave = localStorage.getItem('notepadProLastSave');
-                    
-                    if (savedContent && savedContent.trim() !== '') {
-                        editor.value = savedContent;
-                        if (savedFilename) {
-                            appState.currentFilename = savedFilename;
-                        }
-                        
-                        if (lastSave) {
-                            const lastSaveDate = new Date(lastSave);
-                            const now = new Date();
-                            const diffMinutes = Math.floor((now - lastSaveDate) / (1000 * 60));
-                            
-                            if (diffMinutes < 60) {
-                                showToast('Session Restored', `Restored content from ${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`, 'info');
-                            } else {
-                                const diffHours = Math.floor(diffMinutes / 60);
-                                showToast('Session Restored', `Restored content from ${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`, 'info');
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error restoring session:', e);
-                }
-            }
-            
-            function updateUI() {
-                // Update theme UI
-                document.getElementById('theme-icon').textContent = appState.darkMode ? 'light_mode' : 'dark_mode';
-                
-                // Update word wrap UI
-                document.getElementById('wrap-icon').textContent = appState.wordWrap ? 'wrap_text' : 'text_format';
-                
-                // Update text lines UI
-                document.getElementById('lines-icon').textContent = appState.textLines ? 'check' : 'horizontal_rule';
-                
-                // Update spell check UI
-                document.getElementById('toolbar-spell-check').classList.toggle('active', appState.spellCheck);
-                
-                // Update fullscreen UI
-                document.getElementById('fullscreen-icon').textContent = appState.isFullscreen ? 'fullscreen_exit' : 'fullscreen';
-                
-                // Update window title
-                document.title = `${appState.isModified ? '* ' : ''}${appState.currentFilename} - Notepad Pro`;
-                
-                // Update status bar
-                updateStatusBar();
-                
-                // Save preferences
-                savePreferences();
-            }
-            
-            function updateStatusBar() {
-                const text = editor.value;
-                const lines = text.split('\n').length;
-                const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-                const chars = text.length;
-                
-                // Get cursor position
-                const cursorPosition = editor.selectionStart;
-                let lineNumber = 1;
-                let columnNumber = 1;
-                
-                // Calculate line and column
-                if (cursorPosition > 0) {
-                    const textBeforeCursor = text.substring(0, cursorPosition);
-                    const lines = textBeforeCursor.split('\n');
-                    lineNumber = lines.length;
-                    columnNumber = lines[lines.length - 1].length + 1;
-                }
-                
-                // Update status bar elements
-                statusLines.textContent = `Lines: ${lines}`;
-                statusWords.textContent = `Words: ${words}`;
-                statusChars.textContent = `Characters: ${chars}`;
-                statusPosition.textContent = `Ln ${lineNumber}, Col ${columnNumber}`;
-                statusZoom.textContent = `${appState.zoomLevel}%`;
-            }
-            
-            // File operations
-            function newFile() {
-                if (appState.isModified) {
-                    if (confirm('You have unsaved changes. Do you want to save them before creating a new file?')) {
-                        saveFile(() => {
-                            clearEditor();
-                        });
-                        return;
-                    }
-                }
-                clearEditor();
-            }
-            
-            function clearEditor() {
-                editor.value = '';
-                appState.currentFile = null;
-                appState.currentFilename = 'untitled.txt';
-                appState.isModified = false;
-                appState.history = [];
-                appState.historyIndex = -1;
-                updateUI();
-                editor.focus();
-            }
-            
-            function openFile() {
-                if (appState.isModified) {
-                    if (confirm('You have unsaved changes. Do you want to save them before opening a new file?')) {
-                        saveFile(() => {
-                            fileInput.click();
-                        });
-                        return;
-                    }
-                }
-                fileInput.click();
-            }
-            
-            function handleFileSelection(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    editor.value = e.target.result;
-                    appState.currentFile = file;
-                    appState.currentFilename = file.name;
-                    appState.isModified = false;
-                    appState.history = [];
-                    appState.historyIndex = -1;
-                    updateUI();
-                    updateStatusBar();
-                };
-                reader.readAsText(file);
-                
-                // Reset file input to allow reopening the same file
-                fileInput.value = '';
-            }
-            
-            function saveFile(callback) {
-                if (appState.currentFile) {
-                    // Saving an existing file
-                    saveFileContent(appState.currentFile);
-                } else {
-                    // Need to get a filename first
-                    saveFileAs(callback);
-                }
-            }
-            
-            function saveFileAs(callback) {
-                fileNameInput.value = appState.currentFilename;
-                fileNameDialog.style.display = 'block';
-                fileNameInput.focus();
-                fileNameInput.select();
-                
-                // Store callback for use after file name is entered
-                appState.saveCallback = callback;
-            }
-            
-            function saveFileWithName() {
-                const filename = fileNameInput.value.trim();
-                if (!filename) {
-                    alert('Please enter a file name');
-                    return;
-                }
-                
-                // Use FileSaver.js or similar library to save the file
-                const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
-                saveAs(blob, filename);
-                
-                appState.currentFilename = filename;
-                appState.isModified = false;
-                updateUI();
-                
-                fileNameDialog.style.display = 'none';
-                
-                showToast('File Saved', `File "${filename}" has been saved`, 'success');
-                
-                // Call callback if exists
-                if (typeof appState.saveCallback === 'function') {
-                    appState.saveCallback();
-                    appState.saveCallback = null;
-                }
-            }
-            
-            function cancelFileDialog() {
-                fileNameDialog.style.display = 'none';
-                appState.saveCallback = null;
-            }
-            
-            function saveFileContent(file) {
-                // In a web app we can't directly save to an existing file without permissions
-                // So we'll download a new copy of the file
-                const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
-                saveAs(blob, file.name);
-                
-                appState.isModified = false;
-                updateUI();
-                
-                showToast('File Saved', `File "${file.name}" has been saved`, 'success');
-            }
-            
-            function printFile() {
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html>
-                    <head>
-                        <title>${appState.currentFilename}</title>
-                        <style>
-                            body {
-                                font-family: ${appState.fontFamily};
-                                font-size: ${appState.fontSize}px;
-                                line-height: ${appState.lineHeight};
-                                white-space: pre-wrap;
-                                margin: 20px;
-                            }
-                            @media print {
-                                body { margin: 1cm; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${editor.value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                
-                // Wait for content to load before printing
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            }
-            
-            function exitApp() {
-                if (appState.isModified) {
-                    if (confirm('You have unsaved changes. Do you want to save them before exiting?')) {
-                        saveFile(() => {
-                            window.close();
-                        });
-                        return;
-                    }
-                }
-                window.close();
-            }
-            
-            // Edit operations
-            function addToHistory() {
-                // Only add to history if content changed
-                const currentContent = editor.value;
-                
-                // Don't add if same as current history entry
-                if (appState.historyIndex >= 0 && 
-                    appState.history[appState.historyIndex] === currentContent) {
-                    return;
-                }
-                
-                // If we're in the middle of the history, truncate forward history
-                if (appState.historyIndex < appState.history.length - 1) {
-                    appState.historyIndex++;
-                    editor.value = appState.history[appState.historyIndex];
-                    updateStatusBar();
-                }
-            }
-            
-            function cutText() {
-                if (document.execCommand) {
-                    document.execCommand('cut');
-                } else {
-                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-                    if (selectedText) {
-                        navigator.clipboard.writeText(selectedText).then(() => {
-                            deleteSelectedText();
-                        });
-                    }
-                }
-            }
-            
-            function copyText() {
-                if (document.execCommand) {
-                    document.execCommand('copy');
-                } else {
-                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-                    if (selectedText) {
-                        navigator.clipboard.writeText(selectedText);
-                    }
-                }
-            }
-            
-            function pasteText() {
-                if (document.execCommand) {
-                    document.execCommand('paste');
-                } else {
-                    navigator.clipboard.readText().then(text => {
-                        insertTextAtCursor(text);
-                    });
-                }
-            }
-            
-            function deleteText() {
-                deleteSelectedText();
-            }
-            
-            function deleteSelectedText() {
-                const start = editor.selectionStart;
-                const end = editor.selectionEnd;
-                
-                if (start !== end) {
-                    editor.value = editor.value.substring(0, start) + editor.value.substring(end);
-                    editor.selectionStart = editor.selectionEnd = start;
-                    appState.isModified = true;
-                    addToHistory();
-                    updateStatusBar();
-                }
-            }
-            
-            function insertTextAtCursor(text) {
-                const start = editor.selectionStart;
-                const end = editor.selectionEnd;
-                
-                editor.value = editor.value.substring(0, start) + text + editor.value.substring(end);
-                editor.selectionStart = editor.selectionEnd = start + text.length;
-                appState.isModified = true;
-                addToHistory();
-                updateStatusBar();
-            }
-            
-            function selectAll() {
-                editor.select();
-                updateStatusBar();
-            }
-            
-            function insertTimeDate() {
-                const now = new Date();
-                const formattedDate = now.toLocaleString();
-                insertTextAtCursor(formattedDate);
-            }
-            
-            // Search operations
-            function findText() {
-                searchDialog.style.display = 'block';
-                replaceContainer.style.display = 'none';
-                replaceButton.style.display = 'none';
-                replaceAllButton.style.display = 'none';
-                searchInput.focus();
-                searchInput.select();
-            }
-            
-            function replaceText() {
-                searchDialog.style.display = 'block';
-                replaceContainer.style.display = 'block';
-                replaceButton.style.display = 'inline-block';
-                replaceAllButton.style.display = 'inline-block';
-                searchInput.focus();
-                searchInput.select();
-            }
-            
-            function closeSearch() {
-                searchDialog.style.display = 'none';
-                clearSearchResults();
-            }
-            
-            function findNext() {
-                performSearch(true);
-            }
-            
-            function findPrevious() {
-                performSearch(false);
-            }
-            
-            function performSearch(forward = true) {
-                const query = searchInput.value;
-                if (!query) return;
-                
-                const text = editor.value;
-                const caseSensitive = matchCaseCheck.checked;
-                const wholeWord = wholeWordCheck.checked;
-                
-                let flags = 'g';
-                if (!caseSensitive) flags += 'i';
-                
-                let pattern;
-                if (wholeWord) {
-                    pattern = new RegExp(`\\b${escapeRegExp(query)}\\b`, flags);
-                } else {
-                    pattern = new RegExp(escapeRegExp(query), flags);
-                }
-                
-                appState.searchPattern = pattern;
-                appState.searchResults = [];
-                
-                let match;
-                while ((match = pattern.exec(text)) !== null) {
-                    appState.searchResults.push({
-                        index: match.index,
-                        length: match[0].length,
-                        text: match[0]
-                    });
-                }
-                
-                if (appState.searchResults.length === 0) {
-                    showToast('Search', `No matches found for "${query}"`, 'info');
-                    return;
-                }
-                
-                // Find next/previous result relative to current cursor position
-                const cursorPosition = editor.selectionStart;
-                
-                if (forward) {
-                    // Find next result after cursor
-                    let nextIndex = appState.searchResults.findIndex(result => result.index > cursorPosition);
-                    if (nextIndex === -1) nextIndex = 0; // Wrap around
-                    appState.currentSearchIndex = nextIndex;
-                } else {
-                    // Find previous result before cursor
-                    let prevIndex = appState.searchResults.length - 1;
-                    for (let i = appState.searchResults.length - 1; i >= 0; i--) {
-                        if (appState.searchResults[i].index < cursorPosition) {
-                            prevIndex = i;
-                            break;
-                        }
-                    }
-                    appState.currentSearchIndex = prevIndex;
-                }
-                
-                highlightCurrentSearchResult();
-                showToast('Search', `Match ${appState.currentSearchIndex + 1} of ${appState.searchResults.length}`, 'info');
-            }
-            
-            function highlightCurrentSearchResult() {
-                if (appState.searchResults.length === 0 || appState.currentSearchIndex < 0) return;
-                
-                const result = appState.searchResults[appState.currentSearchIndex];
-                editor.focus();
-                editor.setSelectionRange(result.index, result.index + result.length);
-                
-                // Ensure the result is visible
-                ensureVisible(result.index);
-            }
-            
-            function ensureVisible(index) {
-                // This is a simple approximation since we can't directly scroll to an index
-                // We first need to find the line number
-                const text = editor.value.substring(0, index);
-                const lines = text.split('\n');
-                const lineNumber = lines.length;
-                
-                // Estimate line height (this varies by font size and family)
-                const lineHeight = parseFloat(window.getComputedStyle(editor).lineHeight) || 20;
-                
-                // Scroll to position
-                const position = lineNumber * lineHeight;
-                const editorHeight = editor.clientHeight;
-                
-                if (position < editor.scrollTop || position > editor.scrollTop + editorHeight) {
-                    editor.scrollTop = position - editorHeight / 2;
-                }
-            }
-            
-            function clearSearchResults() {
-                appState.searchResults = [];
-                appState.currentSearchIndex = -1;
-                appState.searchPattern = null;
-            }
-            
-            function updateSearchHighlighting() {
-                if (appState.searchResults.length > 0 && appState.currentSearchIndex >= 0) {
-                    highlightCurrentSearchResult();
-                }
-            }
-            
-            function replaceOne() {
-                if (appState.searchResults.length === 0 || appState.currentSearchIndex < 0) {
-                    performSearch(true);
-                    return;
-                }
-                
-                const result = appState.searchResults[appState.currentSearchIndex];
-                const replacement = replaceInput.value;
-                
-                // Replace the text
-                editor.value = 
-                    editor.value.substring(0, result.index) + 
-                    replacement + 
-                    editor.value.substring(result.index + result.length);
-                
-                appState.isModified = true;
-                addToHistory();
-                
-                // Update search results after replacement
-                performSearch(true);
-            }
-            
-            function replaceAll() {
-                const query = searchInput.value;
-                const replacement = replaceInput.value;
-                
-                if (!query) return;
-                
-                const text = editor.value;
-                const caseSensitive = matchCaseCheck.checked;
-                const wholeWord = wholeWordCheck.checked;
-                
-                let flags = 'g';
-                if (!caseSensitive) flags += 'i';
-                
-                let pattern;
-                if (wholeWord) {
-                    pattern = new RegExp(`\\b${escapeRegExp(query)}\\b`, flags);
-                } else {
-                    pattern = new RegExp(escapeRegExp(query), flags);
-                }
-                
-                const newText = text.replace(pattern, replacement);
-                
-                if (newText === text) {
-                    showToast('Replace', `No matches found for "${query}"`, 'info');
-                    return;
-                }
-                
-                // Count replacements
-                const replacements = (text.match(pattern) || []).length;
-                
-                editor.value = newText;
-                appState.isModified = true;
-                addToHistory();
-                updateStatusBar();
-                
-                showToast('Replace', `Replaced ${replacements} occurrence${replacements !== 1 ? 's' : ''}`, 'success');
-            }
-            
-            function goToLine() {
-                const lineCount = editor.value.split('\n').length;
-                const lineNumber = prompt(`Go to line (1-${lineCount}):`);
-                
-                if (lineNumber === null || lineNumber.trim() === '') return;
-                
-                const targetLine = parseInt(lineNumber, 10);
-                if (isNaN(targetLine) || targetLine < 1 || targetLine > lineCount) {
-                    showToast('Go To Line', `Invalid line number. Please enter a number between 1 and ${lineCount}`, 'error');
-                    return;
-                }
-                
-                // Find the start index of the target line
-                const lines = editor.value.split('\n');
-                let index = 0;
-                
-                for (let i = 0; i < targetLine - 1; i++) {
-                    index += lines[i].length + 1; // +1 for the newline character
-                }
-                
-                editor.focus();
-                editor.setSelectionRange(index, index);
-                
-                // Ensure the line is visible
-                ensureVisible(index);
-            }
-            
-            // View operations
-            function toggleDarkMode() {
-                appState.darkMode = !appState.darkMode;
-                updateEditorPreferences();
-                updateUI();
-            }
-            
-            function toggleTextLines() {
-                appState.textLines = !appState.textLines;
-                updateEditorPreferences();
-                updateUI();
-            }
-            
-            function toggleWordWrap() {
-                appState.wordWrap = !appState.wordWrap;
-                updateEditorPreferences();
-                updateUI();
-            }
-            
-            function toggleWysiwygMode() {
-                appState.isWysiwygMode = !appState.isWysiwygMode;
-                updateEditorPreferences();
-                updateUI();
-                
-                if (appState.isWysiwygMode) {
-                    showToast('Mode Changed', 'Switched to WYSIWYG editing mode', 'info');
-                } else {
-                    showToast('Mode Changed', 'Switched to plain text editing mode', 'info');
-                }
-            }
-            
-            function toggleSpellCheck() {
-                appState.spellCheck = !appState.spellCheck;
-                updateEditorPreferences();
-                updateUI();
-            }
-            
-            function toggleFullscreen() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().then(() => {
-                        appState.isFullscreen = true;
-                        updateUI();
-                    });
-                } else {
-                    document.exitFullscreen().then(() => {
-                        appState.isFullscreen = false;
-                        updateUI();
-                    });
-                }
-            }
-            
-            function zoomIn() {
-                if (appState.zoomLevel < 300) {
-                    appState.zoomLevel += appState.zoomLevel < 100 ? 10 : 25;
-                    appState.fontSize = Math.round(16 * (appState.zoomLevel / 100));
-                    updateEditorPreferences();
-                    updateUI();
-                }
-            }
-            
-            function zoomOut() {
-                if (appState.zoomLevel > 30) {
-                    appState.zoomLevel -= appState.zoomLevel <= 100 ? 10 : 25;
-                    appState.fontSize = Math.round(16 * (appState.zoomLevel / 100));
-                    updateEditorPreferences();
-                    updateUI();
-                }
-            }
-            
-            function zoomReset() {
-                appState.zoomLevel = 100;
-                appState.fontSize = 16;
-                updateEditorPreferences();
-                updateUI();
-            }
-            
-            // Font settings
-            function updateFontPreview() {
-                const family = fontFamily.value;
-                const size = `${fontSize.value}px`;
-                const weight = fontBold.checked ? 'bold' : 'normal';
-                const style = fontItalic.checked ? 'italic' : 'normal';
-                const decoration = fontUnderline.checked ? 'underline' : 'none';
-                
-                fontPreview.style.fontFamily = family;
-                fontPreview.style.fontSize = size;
-                fontPreview.style.fontWeight = weight;
-                fontPreview.style.fontStyle = style;
-                fontPreview.style.textDecoration = decoration;
-            }
-            
-            function applyFontSettings() {
-                appState.fontFamily = fontFamily.value;
-                appState.fontSize = parseInt(fontSize.value, 10);
-                appState.fontWeight = fontBold.checked ? 'bold' : 'normal';
-                appState.fontStyle = fontItalic.checked ? 'italic' : 'normal';
-                appState.textDecoration = fontUnderline.checked ? 'underline' : 'none';
-                
-                updateEditorPreferences();
-            }
-            
-            // Keyboard handling
-            function handleKeyDown(e) {
-                // Handle tab key
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    const start = editor.selectionStart;
-                    const end = editor.selectionEnd;
-                    
-                    // Insert tab or spaces
-                    const spaces = ' '.repeat(appState.tabSize);
-                    editor.value = editor.value.substring(0, start) + spaces + editor.value.substring(end);
-                    
-                    // Move cursor after insertion
-                    editor.selectionStart = editor.selectionEnd = start + appState.tabSize;
-                    
-                    appState.isModified = true;
-                    addToHistory();
-                    return false;
-                }
-            }
-            
-            function handleGlobalKeyDown(e) {
-                // Ctrl/Cmd combinations
-                if (e.ctrlKey || e.metaKey) {
-                    switch (e.key.toLowerCase()) {
-                        case 'n':
-                            e.preventDefault();
-                            newFile();
-                            break;
-                        case 'o':
-                            e.preventDefault();
-                            openFile();
-                            break;
-                        case 's':
-                            e.preventDefault();
-                            if (e.shiftKey) {
-                                saveFileAs();
-                            } else {
-                                saveFile();
-                            }
-                            break;
-                        case 'p':
-                            e.preventDefault();
-                            printFile();
-                            break;
-                        case 'f':
-                            e.preventDefault();
-                            findText();
-                            break;
-                        case 'h':
-                            e.preventDefault();
-                            replaceText();
-                            break;
-                        case 'g':
-                            e.preventDefault();
-                            goToLine();
-                            break;
-                        case '+':
-                        case '=':
-                            e.preventDefault();
-                            zoomIn();
-                            break;
-                        case '-':
-                            e.preventDefault();
-                            zoomOut();
-                            break;
-                        case '0':
-                            e.preventDefault();
-                            zoomReset();
-                            break;
-                    }
-                    
-                    // Ctrl+Shift combinations
-                    if (e.shiftKey) {
-                        switch (e.key.toLowerCase()) {
-                            case 'd':
-                                e.preventDefault();
-                                toggleDarkMode();
-                                break;
-                        }
-                    }
-                } else {
-                    // Regular keys
-                    switch (e.key) {
-                        case 'F3':
-                            e.preventDefault();
-                            if (e.shiftKey) {
-                                findPrevious();
-                            } else {
-                                findNext();
-                            }
-                            break;
-                        case 'F5':
-                            e.preventDefault();
-                            insertTimeDate();
-                            break;
-                        case 'F11':
-                            e.preventDefault();
-                            toggleFullscreen();
-                            break;
-                        case 'Escape':
-                            if (searchDialog.style.display === 'block') {
-                                e.preventDefault();
-                                closeSearch();
-                            }
-                            if (fileNameDialog.style.display === 'block') {
-                                e.preventDefault();
-                                cancelFileDialog();
-                            }
-                            break;
-                    }
-                }
-            }
-            
-            // Helper functions
-            function escapeRegExp(string) {
-                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\                if (appState.historyIndex < appState.history.length - 1) {');
-            }
-            
-            function showToast(title, message, type = 'info') {
-                const toastElement = document.getElementById('toast');
-                const toastTitle = document.getElementById('toast-title');
-                const toastMessage = document.getElementById('toast-message');
-                const toastIcon = document.getElementById('toast-icon');
-                
-                toastTitle.textContent = title;
-                toastMessage.textContent = message;
-                
-                switch (type) {
-                    case 'success':
-                        toastIcon.textContent = 'check_circle';
-                        toastIcon.style.color = '#28a745';
-                        break;
-                    case 'error':
-                        toastIcon.textContent = 'error';
-                        toastIcon.style.color = '#dc3545';
-                        break;
-                    case 'warning':
-                        toastIcon.textContent = 'warning';
-                        toastIcon.style.color = '#ffc107';
-                        break;
-                    default:
-                        toastIcon.textContent = 'info';
-                        toastIcon.style.color = '#17a2b8';
-                }
-                
-                const toast = new bootstrap.Toast(toastElement);
-                toast.show();
-            }
-        });
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>Inventory Management</h3>
+                <p>v1.0.0</p>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item active" onclick="changeTab('dashboard-content')">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('inventory-content')">
+                    <i class="fas fa-box"></i>
+                    <span>Inventory</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('orders-content')">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Orders</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('suppliers-content')">
+                    <i class="fas fa-truck"></i>
+                    <span>Suppliers</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('customers-content')">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('reports-content')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </div>
+                <div class="menu-item" onclick="changeTab('settings-content')">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="menu-item" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </div>
+            </div>
+        </div>
 
-        // FileSaver.js - for saving files
-        (function(a,b){if("function"==typeof define&&define.amd)define([],b);else if("undefined"!=typeof exports)b();else{b(),a.FileSaver={exports:{}}.exports}})(this,function(){"use strict";function b(a,b){return"undefined"==typeof b?b={autoBom:!1}:"object"!=typeof b&&(console.warn("Deprecated: Expected third argument to be a object"),b={autoBom:!b}),b.autoBom&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(a.type)?new Blob(["\uFEFF",a],{type:a.type}):a}function c(a,b,c){var d=new XMLHttpRequest;d.open("GET",a),d.responseType="blob",d.onload=function(){f(d.response,b,c)},d.onerror=function(){console.error("could not download file")},d.send()}function d(a){var b=new XMLHttpRequest;b.open("HEAD",a,!1);try{b.send()}catch(a){}return 200<=b.status&&299>=b.status}function e(a){try{a.dispatchEvent(new MouseEvent("click"))}catch(c){var b=document.createEvent("MouseEvents");b.initMouseEvent("click",!0,!0,window,0,0,0,80,20,!1,!1,!1,!1,0,null),a.dispatchEvent(b)}}var f="object"==typeof window&&window.window===window?window:"object"==typeof self&&self.self===self?self:"object"==typeof global&&global.global===global?global:void 0,a=/Macintosh/.test(navigator.userAgent)&&/AppleWebKit/.test(navigator.userAgent)&&!/Safari/.test(navigator.userAgent),g=f.saveAs||("object"!=typeof window||window!==f?function(){}:"download"in HTMLAnchorElement.prototype&&!a?function(b,g,h){var i=f.URL||f.webkitURL,j=document.createElement("a");g=g||b.name||"download",j.download=g,j.rel="noopener","string"==typeof b?(j.href=b,j.origin===location.origin?e(j):d(j.href)?c(b,g,h):e(j,j.target="_blank")):(j.href=i.createObjectURL(b),setTimeout(function(){i.revokeObjectURL(j.href)},4E4),setTimeout(function(){e(j)},0))}:"msSaveOrOpenBlob"in navigator?function(f,g,h){if(g=g||f.name||"download","string"!=typeof f)navigator.msSaveOrOpenBlob(b(f,h),g);else if(d(f))c(f,g,h);else{var i=document.createElement("a");i.href=f,i.target="_blank",setTimeout(function(){e(i)})}}:function(b,d,e,g){if(g=g||open("","_blank"),g&&(g.document.title=g.document.body.innerText="downloading..."),"string"==typeof b)return c(b,d,e);var h="application/octet-stream"===b.type,i=/constructor/i.test(f.HTMLElement)||f.safari,j=/CriOS\/[\d]+/.test(navigator.userAgent);if((j||h&&i||a)&&"undefined"!=typeof FileReader){var k=new FileReader;k.onloadend=function(){var a=k.result;a=j?a:a.replace(/^data:[^;]*;/,"data:attachment/file;"),g?g.location.href=a:location=a,g=null},k.readAsDataURL(b)}else{var l=f.URL||f.webkitURL,m=l.createObjectURL(b);g?g.location=m:location.href=m,g=null,setTimeout(function(){l.revokeObjectURL(m)},4E4)}});f.saveAs=g.saveAs=g,"undefined"!=typeof module&&(module.exports=g)});
-    </script>
-</body>
-</html>
-                    appState.history = appState.history.slice(0, appState.historyIndex + 1);
-                }
-                
-                // Add new history entry
-                appState.history.push(currentContent);
-                appState.historyIndex++;
-                
-                // Limit history size
-                if (appState.history.length > appState.maxHistory) {
-                    appState.history.shift();
-                    appState.historyIndex--;
-                }
-            }
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="header-actions">
+                    <div class="user-profile">
+                        <img src="/api/placeholder/100/100" alt="User Profile">
+                        <span>Admin User</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Content (Initially Visible) -->
+            <div id="dashboard-content">
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Products</div>
+                            <div class="card-icon primary">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                        <div class="card-value">254</div>
+                        <div class="card-description">5% increase from last month</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Orders</div>
+                            <div class="card-icon success">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                        <div class="card-value">142</div>
+                        <div class="card-description">12% increase from last month</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Low Stock Items</div>
+                            <div class="card-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="card-value">15</div>
+                        <div class="card-description">3 items require immediate attention</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Out of Stock</div>
+                            <div class="card-icon danger">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                        <div class="card-value">8</div>
+                        <div class="card-description">2 less than last month</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Recent Orders</div>
+                        <button class="btn btn-primary" onclick="showModal('order')">New Order</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#ORD001</td>
+                                <td>John Smith</td>
+                                <td>2025-03-05</td>
+                                <td>$1,250.00</td>
+                                <td><span class="status in-stock">Completed</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-eye"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD002</td>
+                                <td>Sarah Johnson</td>
+                                <td>2025-03-04</td>
+                                <td>$840.50</td>
+                                <td><span class="status in-stock">Completed</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-eye"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD003</td>
+                                <td>Michael Brown</td>
+                                <td>2025-03-03</td>
+                                <td>$2,100.75</td>
+                                <td><span class="status low-stock">Processing</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-eye"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD004</td>
+                                <td>Emily Wilson</td>
+                                <td>2025-03-02</td>
+                                <td>$450.25</td>
+                                <td><span class="status out-of-stock">Pending</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-eye"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#ORD005</td>
+                                <td>Robert Davis</td>
+                                <td>2025-03-01</td>
+                                <td>$980.00</td>
+                                <td><span class="status in-stock">Completed</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-eye"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Low Stock Items</div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Reorder Level</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#PRD023</td>
+                                <td>Wireless Keyboard</td>
+                                <td>Electronics</td>
+                                <td>8</td>
+                                <td>10</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn edit-btn"><i class="fas fa-plus-circle"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD045</td>
+                                <td>USB Flash Drive 64GB</td>
+                                <td>Electronics</td>
+                                <td>5</td>
+                                <td>15</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn edit-btn"><i class="fas fa-plus-circle"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD078</td>
+                                <td>Office Chair</td>
+                                <td>Furniture</td>
+                                <td>3</td>
+                                <td>5</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn edit-btn"><i class="fas fa-plus-circle"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD112</td>
+                                <td>Printer Paper A4</td>
+                                <td>Office Supplies</td>
+                                <td>12</td>
+                                <td>20</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn edit-btn"><i class="fas fa-plus-circle"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD134</td>
+                                <td>External Hard Drive 1TB</td>
+                                <td>Electronics</td>
+                                <td>4</td>
+                                <td>8</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn edit-btn"><i class="fas fa-plus-circle"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory Content (Initially Hidden) -->
+            <div id="inventory-content" style="display: none;">
+                <div class="section">
+                    <div class="section-header">
+                        <div class="section-title">Product Inventory</div>
+                        <button class="btn btn-primary" onclick="showModal('product')">Add Product</button>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#PRD001</td>
+                                <td>Laptop Dell XPS 13</td>
+                                <td>Electronics</td>
+                                <td>$1,299.99</td>
+                                <td>25</td>
+                                <td><span class="status in-stock">In Stock</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD002</td>
+                                <td>Office Desk</td>
+                                <td>Furniture</td>
+                                <td>$249.99</td>
+                                <td>12</td>
+                                <td><span class="status in-stock">In Stock</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD003</td>
+                                <td>Wireless Mouse</td>
+                                <td>Electronics</td>
+                                <td>$29.99</td>
+                                <td>8</td>
+                                <td><span class="status low-stock">Low Stock</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD004</td>
+                                <td>Desk Lamp</td>
+                                <td>Office Supplies</td>
+                                <td>$39.99</td>
+                                <td>0</td>
+                                <td><span class="status out-of-stock">Out of Stock</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>#PRD005</td>
+                                <td>Bluetooth Speaker</td>
+                                <td>Electronics</td>
+                                <td>$79.99</td>
+                                <td>15</td>
+                                <td><span class="status in-stock">In Stock</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <div class="action-btn edit-btn"><i class="fas fa-edit"></i></div>
+                                        <div class="action-btn delete-btn"><i class="fas fa-trash"></i></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Other content sections would go here (orders, suppliers, customers, etc.) -->
+            <div id="orders-content" style="display: none;">
+                <h2>Orders Management</h2>
+                <p>Orders content will be implemented here.</p>
+            </div>
             
-            function undo() {
-                if (appState.historyIndex > 0) {
-                    appState.historyIndex--;
-                    editor.value = appState.history[appState.historyIndex];
-                    updateStatusBar();
-                }
-            }
+            <div id="suppliers-content" style="display: none;">
+                <h2>Suppliers Management</h2>
+                <p>Suppliers content will be implemented here.</p>
+            </div>
             
-            function redo() {
-                if (appState.historyIndex < appState.history.length - 1) {
+            <div id="customers-content" style="display: none;">
+                <h2>Customers Management</h2>
+                <p>Customers content will be implemented here.</p>
+            </div>
+            
+            <div id="reports-content" style="display: none;">
+                <h2>Reports</h2>
+                <p>Reports content will be
